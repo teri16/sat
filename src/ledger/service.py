@@ -1,7 +1,7 @@
 """Ledger domain service (UI-agnostic).
 
 繁中：核心業務層，處理命令執行、查詢、統計與匯出。
-English: Core business layer handling command execution, querying, stats, export, and import.
+English: Core business layer handling command execution, querying, stats, and export.
 """
 
 from __future__ import annotations
@@ -10,8 +10,8 @@ from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from zoneinfo import ZoneInfo
 
-from .codec import export_json, import_json
-from .commands import Add, CommandParseError, CommandParser, Del, Export, Help, Import, ImportMode, ListCmd, Pie, Sum
+from .codec import export_json
+from .commands import Add, CommandParseError, CommandParser, Del, Export, Help, ListCmd, Pie, Sum
 from .models import MonthlyStats, Transaction
 from .pie import render_expense_pie
 
@@ -95,45 +95,7 @@ class LedgerService:
                 return "\n".join(lines)
             return "Unsupported export format"
 
-        if isinstance(cmd, Import):
-            return self.import_data(cmd.mode, cmd.payload)
-
         raise ValueError("Unhandled command")
-
-    def import_data(self, mode: ImportMode, payload: str) -> str:
-        """匯入資料 / Import data.
-
-        繁中：
-        - merge：保留原有資料並追加。
-        - replace：先清空再匯入。
-
-        English:
-        - merge: keep existing rows and append imported rows.
-        - replace: clear existing rows before import.
-        """
-
-        timezone, imported_rows = import_json(payload)
-        self.timezone = timezone
-
-        if mode == ImportMode.REPLACE:
-            self._txs = []
-            self._next_id = 1
-
-        for tx in imported_rows:
-            self._txs.append(
-                Transaction(
-                    id=self._next_id,
-                    amount=tx.amount,
-                    category=tx.category,
-                    note=tx.note,
-                    occurred_at=tx.occurred_at,
-                    created_at=tx.created_at,
-                    deleted=tx.deleted,
-                )
-            )
-            self._next_id += 1
-
-        return f"Imported {len(imported_rows)} records ({mode.value})"
 
     def monthly_stats(self, ym: str) -> MonthlyStats:
         """月份統計 / Monthly stats by YYYY-MM."""
@@ -161,7 +123,7 @@ class LedgerService:
             rows = [t for t in rows if t.occurred_at.date() == now.date()]
         elif scope == "7d":
             rows = [t for t in rows if t.occurred_at >= now - timedelta(days=7)]
-        elif scope and len(scope) == 7 and scope[4] == "-":
+        elif len(scope) == 7 and scope[4] == "-":
             rows = [t for t in rows if t.occurred_at.strftime("%Y-%m") == scope]
 
         if not rows:
@@ -201,6 +163,5 @@ class LedgerService:
             "  del <id>\n"
             "  pie [month]\n"
             "  export csv|json\n"
-            "  import <merge|replace> <json_payload>\n"
             "  help|-h|--help"
         )
