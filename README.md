@@ -25,7 +25,7 @@
 
 目前 repository 已完成 **Domain Layer（核心邏輯）**，可被 Android 與未來 PWA 共用：
 
-- ✅ 指令解析（`add/list/sum/del/pie/export/help`）
+- ✅ 指令解析（`add/list/sum/del/pie/export/import/help`）
 - ✅ ASCII-only 規則驗證
 - ✅ 月統計（Income / Expense / Net）
 - ✅ ASCII 圖表輸出（Top 6 + Others）
@@ -126,7 +126,7 @@ Text Output / JSON / CSV
 1. Android UI：Top Bar / Output / Input / 功能鍵列
 2. Android Data Layer：Room（離線持久化）
 3. PWA Data Layer：IndexedDB（格式與 Domain 對齊）
-4. 補完 Import mode：`merge` / `replace`
+4. 強化 `import` 錯誤回報與格式驗證
 5. 支援 `occurred_at` 參數輸入與更完整時間驗證
 
 ---

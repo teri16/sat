@@ -15,7 +15,7 @@ class CommandParseError(ValueError):
 
 
 class ImportMode(str, Enum):
-    """繁中：保留給 import 模式。/ English: Reserved import mode enum."""
+    """繁中：import 模式。/ English: Import mode enum."""
 
     MERGE = "merge"
     REPLACE = "replace"
@@ -74,6 +74,14 @@ class Export(Command):
     fmt: str
 
 
+@dataclass
+class Import(Command):
+    """繁中：資料匯入。/ English: Import data."""
+
+    mode: ImportMode
+    payload: str
+
+
 class CommandParser:
     """繁中：指令解析器。/ English: Command parser."""
 
@@ -87,8 +95,8 @@ class CommandParser:
     def parse(cls, raw: str) -> Command:
         """解析命令 / Parse a command string.
 
-        繁中：支援全域 help、命令層級 help、add 的 ASCII 驗證。
-        English: Supports global help, command-level help, and ASCII validation for add.
+        繁中：支援全域 help、命令層級 help、add 的 ASCII 驗證與 import。
+        English: Supports global help, command-level help, add ASCII validation, and import.
         """
 
         text = raw.strip()
@@ -135,5 +143,16 @@ class CommandParser:
             if len(parts) != 2:
                 raise CommandParseError("Usage: export csv|json")
             return Export(parts[1].lower())
+
+        if cmd == "import":
+            split_import = text.split(maxsplit=2)
+            if len(split_import) != 3:
+                raise CommandParseError("Usage: import <merge|replace> <json_payload>")
+            mode_raw = split_import[1].lower()
+            try:
+                mode = ImportMode(mode_raw)
+            except ValueError as exc:
+                raise CommandParseError("Usage: import <merge|replace> <json_payload>") from exc
+            return Import(mode=mode, payload=split_import[2])
 
         raise CommandParseError(f"Unknown command: {cmd}")

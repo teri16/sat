@@ -50,3 +50,23 @@ def test_pie_and_export_json() -> None:
 
     assert "Expense Pie" in svc.execute("pie")
     assert "schema_version" in svc.execute("export json")
+
+
+def test_import_merge_and_replace() -> None:
+    """繁中：驗證 import merge/replace。/ English: Verify import merge/replace behavior."""
+
+    source = LedgerService()
+    source.execute("add 200 salary")
+    source.execute("add -30 food")
+    payload = source.execute("export json").replace("\n", " ")
+
+    target = LedgerService()
+    target.execute("add 10 misc")
+
+    merge_result = target.execute(f"import merge {payload}")
+    assert "Imported 2 records (merge)" == merge_result
+    assert "SUM month: 180" in target.execute("sum month")
+
+    replace_result = target.execute(f"import replace {payload}")
+    assert "Imported 2 records (replace)" == replace_result
+    assert "SUM month: 170" in target.execute("sum month")
